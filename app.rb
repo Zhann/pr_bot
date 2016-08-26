@@ -58,7 +58,15 @@ class PullRequest
   end
 
   def gh_client
-    @@gh_client ||= Octokit::Client.new(login: ENV['GITHUB_USER'], password: ENV['GITHUB_PASSWORD'])
+    @@gh_client ||= Octokit::Client.new(gh_authentication)
+  end
+
+  def gh_authentication
+    if ENV['GITHUB_TOKEN']
+      {access_token: ENV['GITHUB_TOKEN']}
+    else
+      {login: ENV['GITHUB_USER'], password: ENV['GITHUB_PASSWORD']}
+    end
   end
 end
 
@@ -68,9 +76,6 @@ end
 
 post '/' do
   payload = JSON.parse(request.body.read)
-
-  # Write to disk for debugging purposes
-  File.write("payload.json", JSON.pretty_generate(payload))
 
   # Write to STDOUT for debugging perpose
   puts "Incoming payload with action: #{payload["action"].inspect}, label: #{payload.dig("label", "name").inspect}, current assignees: #{payload.dig("pull_request", "assignees").inspect}"
