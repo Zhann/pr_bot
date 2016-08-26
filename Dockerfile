@@ -11,7 +11,8 @@ COPY Gemfile.lock .
 RUN bundle install
 COPY app.rb .
 
-EXPOSE 80
+ENV BIND 0.0.0.0
+EXPOSE 4567
 
 CMD bundle exec ruby app.rb
 

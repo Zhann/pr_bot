@@ -3,6 +3,8 @@ require 'json'
 Bundler.require
 Dotenv.load
 
+set :bind, ENV['BIND'] || 'localhost'
+
 # Required ENV vars:
 #
 # GITHUB_USER: botsname
