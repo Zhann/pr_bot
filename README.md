@@ -1,3 +1,30 @@
 # PR Bot
 
-A Bot that assigns reviewers to github PR's
+A Bot that assigns reviewers to github PR's.
+
+When you add a specific label to a pull request, this bot will assign
+reviewers. It picks one random reviewer per review "group". PR Bot will not
+re-assign already assigned PR's. If you want to reassign a PR, first remove the
+current assignees.
+
+This bot will need the username and password of a github user with access to
+the repo OR a github access token.
+
+## Setup
+
+1. Run this Sinatra app with the following env vars
+  * GITHUB_TOKEN: an access token for a user with `repo` access scope. OR
+  * GITHUB_USER and GITHUB_PASSWORD: the username and password of a github user. 
+  * PR_LABEL: the label's text string to trigger the bot.
+  * REVIEWER_POOL: a list of github username lists.
+1. Add a webhook to your github repository
+  * If this bot is running at prbot.example.com, set the webhook to `https://prbot.example.com/`.
+  * Set the Content type to `application/json`.
+  * Don't set a secret.
+  * Choose "Let me select individual events" and check only "Pull request".
+
+## Usage
+
+```bash
+GITHUB_TOKEN=5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8 PR_LABEL=for-review REVIEWER_POOL=[["andruby", "jeff"],["defunkt","pjhyett"]] ruby app.rb
+```
