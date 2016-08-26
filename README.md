@@ -34,5 +34,20 @@ bundle install
 You can run the Sinatra app like so, (or use a [.env](https://github.com/bkeepers/dotenv) file).
 
 ```bash
-GITHUB_TOKEN=5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8 PR_LABEL=for-review REVIEWER_POOL=[["andruby", "jeff"],["defunkt","pjhyett"]] ruby app.rb
+GITHUB_TOKEN=5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8 PR_LABEL=for-review REVIEWER_POOL=[["andruby","jeff"],["defunkt","pjhyett"]] ruby app.rb
+```
+
+## Docker
+
+Alternatively you can run this with docker.
+
+```bash
+docker run -p 4567:4567 -e "PR_LABEL=for-review" -e "GITHUB_TOKEN=5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8" -e 'REVIEWER_POOL=[["andruby","jeff"],["defunkt","pjhyett"]]' andruby/pr_bot
+```
+
+### Build and run
+
+```bash
+docker build -t pr_bot .
+docker run -p 4567:4567 -e "PR_LABEL=for-review" -e "GITHUB_TOKEN=5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8" -e 'REVIEWER_POOL=[["andruby","jeff"],["defunkt","pjhyett"]]' pr_bot
 ```
