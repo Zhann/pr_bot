@@ -14,7 +14,7 @@ the repo OR a github access token.
 
 1. Run this Sinatra app with the following env vars
   * GITHUB_TOKEN: an access token for a user with `repo` access scope. OR
-  * GITHUB_USER and GITHUB_PASSWORD: the username and password of a github user. 
+  * GITHUB_USER and GITHUB_PASSWORD: the username and password of a github user.
   * PR_LABEL: the label's text string to trigger the bot.
   * REVIEWER_POOL: a list of github username lists.
 1. Add a webhook to your github repository
@@ -34,7 +34,7 @@ bundle install
 You can run the Sinatra app like so, (or use a [.env](https://github.com/bkeepers/dotenv) file).
 
 ```bash
-GITHUB_TOKEN=5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8 PR_LABEL=for-review REVIEWER_POOL=[["andruby","jeff"],["defunkt","pjhyett"]] ruby app.rb
+GITHUB_TOKEN=5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8 PR_LABEL=for-review REVIEWER_POOL=[{"count": 2, "name": ["andruby","jeff","ron"]},{"count": 1, "names": ["defunkt","pjhyett"]}] ruby app.rb
 ```
 
 ## Docker

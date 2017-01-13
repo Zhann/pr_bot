@@ -35,9 +35,9 @@ class PullRequest
   end
 
   def assignees
-    @assignees ||= @reviewer_pool.map do |group| 
-      (group-[creator]).sample
-    end
+    @assignees ||= @reviewer_pool.map do |pool|
+      (pool["names"]-[creator]).sample(pool["count"])
+    end.flatten
   end
 
   def creator
