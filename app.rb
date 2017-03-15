@@ -20,22 +20,22 @@ class PullRequest
   end
 
   def needs_assigning?
-    # When adding label "for-review" and no assignees yet
-    @payload["action"] == "labeled" && @payload.dig("label", "name") == @label && @payload.dig("pull_request", "assignees") == []
+    # When adding label "for-review" and no reviewers yet
+    @payload["action"] == "labeled" && @payload.dig("label", "name") == @label && gh_client.pull_request_review_requests(repo_id, pr_number) == []
   end
 
-  def set_assignees!
-    gh_client.update_issue(repo_id, pr_number, assignees: assignees)
+  def set_reviewers!
+    gh_client.request_pull_request_review(repo_id, pr_number, reviewers)
   rescue Octokit::UnprocessableEntity => e
-    puts "Unable to add set assignees: #{e.message}"
+    puts "Unable to add set reviewers: #{e.message}"
   end
 
   def add_comment!
     gh_client.add_comment(repo_id, pr_number, message)
   end
 
-  def assignees
-    @assignees ||= @reviewer_pool.map do |pool|
+  def reviewers
+    @reviewers ||= @reviewer_pool.map do |pool|
       (pool["names"]-[creator]).sample(pool["count"])
     end.flatten
   end
@@ -47,8 +47,8 @@ class PullRequest
   private
 
   def message
-    assignees_s = assignees.map { |a| "@#{a}" }.join(" and ")
-    "Thank you @#{creator} for your contribution! My random determinator has determined that #{assignees_s} shall review your code"
+    reviewers_s = reviewers.map { |a| "@#{a}" }.join(" and ")
+    "Thank you @#{creator} for your contribution! My random determinator has determined that #{reviewers_s} shall review your code"
   end
 
   def pr_number
@@ -80,14 +80,14 @@ post '/' do
   payload = JSON.parse(request.body.read)
 
   # Write to STDOUT for debugging perpose
-  puts "Incoming payload with action: #{payload["action"].inspect}, label: #{payload.dig("label", "name").inspect}, current assignees: #{payload.dig("pull_request", "assignees").inspect}"
+  puts "Incoming payload with action: #{payload["action"].inspect}, label: #{payload.dig("label", "name").inspect}, current reviewers: #{payload.dig("pull_request", "reviewers").inspect}"
 
   pull_request = PullRequest.new(payload, reviewer_pool: JSON.parse(ENV['REVIEWER_POOL']), label: ENV['PR_LABEL'])
   if pull_request.needs_assigning?
-    puts "Assigning #{pull_request.assignees.inspect} to PR from #{pull_request.creator}"
+    puts "Assigning #{pull_request.reviewers.inspect} to PR from #{pull_request.creator}"
     pull_request.add_comment!
-    pull_request.set_assignees!
+    pull_request.set_reviewers!
   else
-    puts "No need to assign"
+    puts "No need to assign reviewers"
   end
 end
