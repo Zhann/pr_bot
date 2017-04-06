@@ -3,20 +3,30 @@ require 'json'
 Bundler.require
 Dotenv.load
 
+Dir["lib/strategies/*.rb"].each { |f| require_relative(f) }
+
 set :bind, ENV['BIND'] || 'localhost'
 
 # Required ENV vars:
 #
 # GITHUB_USER: botsname
 # GITHUB_PASSWORD: YourPwd
-# REVIEWER_POOL: [["andruby","x","y"],["a","b","c"]]
+# REVIEWER_POOL (simple strategy): ["user1", "user2", "user3"]
+# REVIEWER_POOL (tiered strategy): [{"count": 2, "name": ["andruby","jeff","ron"]},{"count": 1, "names": ["defunkt","pjhyett"]}]
+# REVIEWER_POOL (teams strategy): [{"captain": "user1", "members": ["user2", "user3"]},{"captain": "user4", "members": ["user4", "user5"]}]
 # PR_LABEL: for-review
+#
+# Optional ENV vars:
+#
+# STRATEGY: list OR tiered OR teams (defaults to simple)
 
 class PullRequest
-  def initialize(payload, reviewer_pool:, label:)
+  attr_reader :strategy
+
+  def initialize(payload, reviewer_pool:, label:, strategy: "list")
     @payload = payload
-    @reviewer_pool = reviewer_pool
     @label = label
+    @strategy = const_get("#{strategy.capitalize}Strategy").new(reviewer_pool)
   end
 
   def needs_assigning?
@@ -35,9 +45,7 @@ class PullRequest
   end
 
   def reviewers
-    @reviewers ||= @reviewer_pool.map do |pool|
-      (pool["names"]-[creator]).sample(pool["count"])
-    end.flatten
+    @reviewers ||= strategy.pick_reviewers(creator)
   end
 
   def creator
@@ -48,7 +56,7 @@ class PullRequest
 
   def message
     reviewers_s = reviewers.map { |a| "@#{a}" }.join(" and ")
-    "Thank you @#{creator} for your contribution! My random determinator has determined that #{reviewers_s} shall review your code"
+    "Thank you @#{creator} for your contribution! I have determined that #{reviewers_s} shall review your code"
   end
 
   def pr_number
