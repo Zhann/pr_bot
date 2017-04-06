@@ -23,10 +23,10 @@ set :bind, ENV['BIND'] || 'localhost'
 class PullRequest
   attr_reader :strategy
 
-  def initialize(payload, reviewer_pool:, label:, strategy: "list")
+  def initialize(payload, reviewer_pool:, label:, strategy: )
     @payload = payload
     @label = label
-    @strategy = const_get("#{strategy.capitalize}Strategy").new(reviewer_pool)
+    @strategy = const_get("#{(strategy || "list").capitalize}Strategy").new(reviewer_pool)
   end
 
   def needs_assigning?
@@ -90,7 +90,7 @@ post '/' do
   # Write to STDOUT for debugging perpose
   puts "Incoming payload with action: #{payload["action"].inspect}, label: #{payload.dig("label", "name").inspect}, current reviewers: #{payload.dig("pull_request", "reviewers").inspect}"
 
-  pull_request = PullRequest.new(payload, reviewer_pool: JSON.parse(ENV['REVIEWER_POOL']), label: ENV['PR_LABEL'])
+  pull_request = PullRequest.new(payload, reviewer_pool: JSON.parse(ENV['REVIEWER_POOL']), label: ENV['PR_LABEL'], strategy: ENV['STRATEGY'])
   if pull_request.needs_assigning?
     puts "Assigning #{pull_request.reviewers.inspect} to PR from #{pull_request.creator}"
     pull_request.add_comment!
