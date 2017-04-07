@@ -10,6 +10,7 @@ COPY Gemfile .
 COPY Gemfile.lock .
 RUN bundle install
 COPY app.rb .
+COPY lib/ lib/
 
 ENV BIND 0.0.0.0
 EXPOSE 4567
