@@ -47,7 +47,7 @@ class PullRequest
   end
 
   def reviewers
-    @reviewers ||= strategy.pick_reviewers(creator)
+    @reviewers ||= strategy.pick_reviewers(pr_creator: creator)
   end
 
   def creator
