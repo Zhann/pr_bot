@@ -3,7 +3,9 @@ require 'json'
 Bundler.require
 Dotenv.load
 
-Dir["lib/strategies/*.rb"].each { |f| require_relative(f) }
+require_relative "lib/strategies/list_strategy.rb"
+require_relative "lib/strategies/teams_strategy.rb"
+require_relative "lib/strategies/tiered_strategy.rb"
 
 set :bind, ENV['BIND'] || 'localhost'
 
