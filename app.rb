@@ -26,7 +26,7 @@ class PullRequest
   def initialize(payload, reviewer_pool:, label:, strategy: )
     @payload = payload
     @label = label
-    @strategy = const_get("#{(strategy || "list").capitalize}Strategy").new(reviewer_pool)
+    @strategy = Object.const_get("#{(strategy || "list").capitalize}Strategy").new(reviewer_pool: reviewer_pool)
   end
 
   def needs_assigning?
