@@ -1,22 +1,16 @@
-GIT
-  remote: https://github.com/octokit/octokit.rb.git
-  revision: d9b2ed79a0465e34ae03baadf05b5173df2c200e
-  ref: d9b2ed7
-  specs:
-    octokit (4.6.2)
-      sawyer (~> 0.8.0, >= 0.5.3)
-
 GEM
   remote: https://rubygems.org/
   specs:
-    addressable (2.5.0)
+    addressable (2.5.1)
       public_suffix (~> 2.0, >= 2.0.2)
     daemons (1.2.3)
     dotenv (2.1.1)
     eventmachine (1.2.3)
-    faraday (0.11.0)
+    faraday (0.12.0.1)
       multipart-post (>= 1.2, < 3)
     multipart-post (2.0.0)
+    octokit (4.7.0)
+      sawyer (~> 0.8.0, >= 0.5.3)
     public_suffix (2.0.5)
     rack (1.6.4)
     rack-protection (1.5.3)
@@ -39,7 +33,7 @@ PLATFORMS
 
 DEPENDENCIES
   dotenv
-  octokit!
+  octokit
   sinatra
   thin
 
