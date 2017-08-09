@@ -9,6 +9,9 @@ require_relative "lib/strategies/tiered_strategy.rb"
 
 set :bind, ENV['BIND'] || 'localhost'
 
+# Let the library traverse all pages, most querries won't fetch large lists anyway
+Octokit.auto_paginate = true
+
 # Required ENV vars:
 #
 # GITHUB_USER: botsname
