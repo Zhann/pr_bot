@@ -32,4 +32,22 @@ describe TeamsStrategy do
       assert (reviewers.include?("user4") ^ reviewers.include?("user5") ^ reviewers.include?("user6"))
     end
   end
+
+  describe "works without captains" do
+    before do
+      pool = [{"members" => ["user1", "user2", "user3"], "count" => 2}, {"members" => ["user4", "user5", "user6"], "count" => 1}]
+      @strategy = TeamsStrategy.new(reviewer_pool: pool)
+    end
+
+    it "picks team member from the same team" do
+      reviewers = @strategy.pick_reviewers(pr_creator: "user2")
+
+      assert reviewers.include?("user1")
+      assert reviewers.include?("user3")
+
+      reviewers = @strategy.pick_reviewers(pr_creator: "user5")
+      assert (reviewers.include?("user4") ^ reviewers.include?("user5") ^ reviewers.include?("user6"))
+    end
+  end
+
 end

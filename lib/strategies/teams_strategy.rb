@@ -4,11 +4,17 @@ require_relative 'base'
 # the creator is from and assigns the captain and anthor team member
 class TeamsStrategy < BaseStrategy
   def pick_reviewers(pr_creator: )
+    team = team_for(pr_creator)
+
+    # you can specify count on the whole pool or for each team separately
+    default_num = 2
+    reviewers_num = team ? team.fetch("count", default_num) : default_num
+
     if captain?(pr_creator)
-      team_for(pr_creator)["members"].sample(2)
+      team["members"].sample(reviewers_num)
     elsif member?(pr_creator)
-      team = team_for(pr_creator)
-      [Array(team["captains"]).sample(1), (team["members"] - [pr_creator]).sample(1)].flatten
+      captain = Array(team["captains"]).sample(1)
+      [captain, (team["members"] - [pr_creator]).sample(reviewers_num - captain.size)].flatten
     else
       @reviewer_pool.sample(2).map { |team| all_for_team(team).sample(1) }.flatten
     end
