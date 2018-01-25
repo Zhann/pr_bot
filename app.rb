@@ -36,7 +36,7 @@ class PullRequest
 
   def needs_assigning?
     # When adding label "for-review" and no reviewers yet
-    @payload["action"] == "labeled" && @payload.dig("label", "name") == @label && gh_client.pull_request_review_requests(repo_id, pr_number) == []
+    @payload["action"] == "labeled" && @payload.dig("label", "name") == @label && gh_client.pull_request_review_requests(repo_id, pr_number)[:users] == []
   end
 
   def set_reviewers!
