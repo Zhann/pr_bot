@@ -13,8 +13,8 @@ the repo OR a github access token.
 ## Setup
 
 1. Run this Sinatra app with the following env vars
-  * GITHUB_TOKEN: an access token for a user with `repo` access scope. OR
-  * GITHUB_USER and GITHUB_PASSWORD: the username and password of a github user.
+  * GITLAB_TOKEN: an access token for a user with `repo` access scope.
+  * GITLAB_ENDPOINT: the URL for Gitlab's API
   * PR_LABEL: the label's text string to trigger the bot.
   * REVIEWER_POOL: a list of github username lists.
 1. Add a webhook to your github repository

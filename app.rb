@@ -9,13 +9,10 @@ require_relative "lib/strategies/tiered_strategy.rb"
 
 set :bind, ENV['BIND'] || 'localhost'
 
-# Let the library traverse all pages, most querries won't fetch large lists anyway
-Octokit.auto_paginate = true
-
 # Required ENV vars:
 #
-# GITHUB_USER: botsname
-# GITHUB_PASSWORD: YourPwd
+# GITLAB_TOKEN: S0meToken
+# GITLAB_ENDPOINT: https://your.gitlab.com/api/v4
 # REVIEWER_POOL (simple strategy): ["user1", "user2", "user3"]
 # REVIEWER_POOL (tiered strategy): [{"count": 2, "name": ["andruby","jeff","ron"]},{"count": 1, "names": ["defunkt","pjhyett"]}]
 # REVIEWER_POOL (teams strategy): [{"captain": "user1", "members": ["user2", "user3"]},{"captain": "user4", "members": ["user4", "user5"]}]
@@ -35,53 +32,61 @@ class PullRequest
   end
 
   def needs_assigning?
-    # When adding label "for-review" and no reviewers yet
-    @payload["action"] == "labeled" && @payload.dig("label", "name") == @label && gh_client.pull_request_review_requests(repo_id, pr_number)[:users] == []
+    # When adding label "for-review"
+    label_changes = @payload.dig("changes", "labels")
+
+    # No labels where changed
+    return false unless label_changes
+
+    # For gitlab, we don't check if someone was already
+    return false if label_changes["previous"].detect { |label| label["title"] == @label }
+    return true if label_changes["current"].detect { |label| label["title"] == @label }
   end
 
-  def set_reviewers!
-    gh_client.request_pull_request_review(repo_id, pr_number, reviewers)
-  rescue Octokit::UnprocessableEntity => e
-    puts "Unable to add set reviewers: #{e.message}"
+  def set_assigner!
+    assignee_id = username_to_id(reviewer)
+    client.update_merge_request(project_id, merge_request_id, assignee_id: assignee_id)
+  # rescue Octokit::UnprocessableEntity => e
+    # puts "Unable to add set reviewers: #{e.message}"
   end
 
   def add_comment!
-    gh_client.add_comment(repo_id, pr_number, message)
+    client.create_merge_request_note(project_id, merge_request_id, message)
   end
 
-  def reviewers
-    @reviewers ||= strategy.pick_reviewers(pr_creator: creator)
+  def reviewer
+    @reviewer ||= strategy.pick_reviewers(pr_creator: creator).first
   end
 
   def creator
-    @payload.dig("pull_request", "user", "login")
+    @creator ||= begin
+      author_id = @payload.dig("object_attributes", "author_id")
+      client.user(author_id).username
+    end
   end
 
   private
 
   def message
-    reviewers_s = reviewers.map { |a| "@#{a}" }.join(" and ")
-    "Thank you @#{creator} for your contribution! I have determined that #{reviewers_s} shall review your code"
+    "Thank you @#{creator} for your contribution! I have determined that @#{reviewer} shall review your code"
   end
 
-  def pr_number
-    @payload.dig("number")
+  def project_id
+    @payload.dig("project", "id")
   end
 
-  def repo_id
-    @payload.dig("repository", "id")
+  def merge_request_id
+    # URL's need the "internal" id
+    @payload.dig("object_attributes", "iid")
   end
 
-  def gh_client
-    @@gh_client ||= Octokit::Client.new(gh_authentication)
+  def client
+    @@client ||= Gitlab.client(endpoint: ENV['GITLAB_ENDPOINT'], private_token: ENV['GITLAB_TOKEN'])
   end
 
-  def gh_authentication
-    if ENV['GITHUB_TOKEN']
-      {access_token: ENV['GITHUB_TOKEN']}
-    else
-      {login: ENV['GITHUB_USER'], password: ENV['GITHUB_PASSWORD']}
-    end
+  def username_to_id(username)
+    # puts "Unable to add set reviewers: #{e.message}"
+    client.users(username: username).first&.id
   end
 end
 
@@ -89,17 +94,17 @@ get '/status' do
   "ok"
 end
 
-post '/' do
+post '/gitlab-mr' do
   payload = JSON.parse(request.body.read)
 
   # Write to STDOUT for debugging perpose
-  puts "Incoming payload with action: #{payload["action"].inspect}, label: #{payload.dig("label", "name").inspect}, current reviewers: #{payload.dig("pull_request", "reviewers").inspect}"
+  puts "Incoming payload: #{payload.inspect}"
 
   pull_request = PullRequest.new(payload, reviewer_pool: JSON.parse(ENV['REVIEWER_POOL']), label: ENV['PR_LABEL'], strategy: ENV['STRATEGY'])
   if pull_request.needs_assigning?
-    puts "Assigning #{pull_request.reviewers.inspect} to PR from #{pull_request.creator}"
+    puts "Assigning #{pull_request.reviewer.inspect} to PR from #{pull_request.creator}"
     pull_request.add_comment!
-    pull_request.set_reviewers!
+    pull_request.set_assigner!
   else
     puts "No need to assign reviewers"
   end
